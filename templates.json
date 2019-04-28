@@ -1,0 +1,24 @@
+{
+    "templates": {
+        "hall": ["method", "hall"],
+        "hostTk": ["method", "host_tk"],
+        "hostSsh": ["method", "host_ssh"],
+        "hostPing": ["method", "host_ping"],
+        "hostTkShell": ["method", "host_tk", "bash"],
+        "sshTkShell": ["method", "host_ssh", "bash"],
+        "hallShell": ["method", "hall", "bash"],
+        "hostTkKind": ["method", "type", "host_tk"],
+        "hostSshKind": ["method", "type", "host_ssh"],
+        "hallKind": ["method", "type", "hall"]
+    },
+    "types": {
+        "method": "QString",
+        "hall": "double",
+        "host_tk": "QJsonArray",
+        "host_ssh": "QJsonArray",
+        "host_ping": "QJsonArray",
+        "bash": "QJsonArray",
+        "type": "QString"
+    }
+
+}

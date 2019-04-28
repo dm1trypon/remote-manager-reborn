@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>templates.json</file>
+        <file>remote-manager.cfg</file>
+    </qresource>
+</RCC>
