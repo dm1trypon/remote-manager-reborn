@@ -4,24 +4,25 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
+#include <QObject>
 
-class Configs
+class Configs : public QObject
 {
+    Q_OBJECT
 public:
-    Configs(){}
-    static Configs& Instance();
+    Configs();
 
     bool readConfigs(const QString &name, const QString &path);
     QMap<QString, QJsonObject> getConfigs();
 
+    bool isValidMainConfig();
 private:
-    Configs(const Configs& root) = delete;
-    Configs& operator = (const Configs&) = delete;
-
     QMap <QString, QJsonObject> _configs;
 
     bool isValidConfig(const QJsonDocument docJsonConfig);
 
+    bool isValidObject(const QJsonObject mainConf, const QJsonObject checkConf, const QString &name);
+    bool isValidFields(const QJsonObject fieldConf, const QJsonArray fieldsArr);
 };
 
 #endif // CONFIGS_H

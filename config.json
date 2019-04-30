@@ -1,0 +1,13 @@
+{
+    "main": ["service", "mariadb", "commands"],
+    "mariadb": ["db_host", "db_user", "db_pass", "db_port"],
+    "service": ["port"],
+    "types": {
+        "port": "double",
+        "db_options": "QString",
+        "db_host": "QString",
+        "db_user": "QString",
+        "db_pass": "QString",
+        "db_port": "double"
+    }
+}

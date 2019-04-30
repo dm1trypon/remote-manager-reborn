@@ -1,24 +1,27 @@
 {
     "templates": {
-        "hall": ["method", "hall"],
-        "hostTk": ["method", "host_tk"],
-        "hostSsh": ["method", "host_ssh"],
+        "hallEx": ["method", "hall", "ssh"],
+        "hallSsh": ["method", "hall", "ssh"],
+        "ex": ["method", "host_ex"],
+        "ssh": ["method", "host_ssh"],
         "hostPing": ["method", "host_ping"],
-        "hostTkShell": ["method", "host_tk", "bash"],
-        "sshTkShell": ["method", "host_ssh", "bash"],
-        "hallShell": ["method", "hall", "bash"],
-        "hostTkKind": ["method", "type", "host_tk"],
-        "hostSshKind": ["method", "type", "host_ssh"],
-        "hallKind": ["method", "type", "hall"]
+        "exShell": ["method", "host_ex", "bash"],
+        "sshShell": ["method", "host_ssh", "bash"],
+        "hallExShell": ["method", "hall", "bash", "ssh"],
+        "hallSshShell": ["method", "hall", "bash", "ssh"],
+        "exKind": ["method", "type", "host_ex"],
+        "sshKind": ["method", "type", "host_ssh"],
+        "hallExKind": ["method", "type", "hall", "ssh"],
+        "hallSshKind": ["method", "type", "hall", "ssh"]
     },
     "types": {
         "method": "QString",
         "hall": "double",
-        "host_tk": "QJsonArray",
-        "host_ssh": "QJsonArray",
-        "host_ping": "QJsonArray",
-        "bash": "QJsonArray",
-        "type": "QString"
+        "host_ex": "QVariantList",
+        "host_ssh": "QVariantList",
+        "host_ping": "QVariantList",
+        "bash": "QVariantList",
+        "type": "QString",
+        "ssh": "bool"
     }
-
 }

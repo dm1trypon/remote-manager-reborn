@@ -20,7 +20,11 @@ SOURCES += \
     templatesjson.cpp \
     configs.cpp \
     serverrm.cpp \
-    inits.cpp
+    inits.cpp \
+    parser.cpp \
+    manager.cpp \
+    clientexecuter.cpp \
+    database.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -31,7 +35,11 @@ HEADERS += \
     templatesjson.h \
     configs.h \
     serverrm.h \
-    inits.h
+    inits.h \
+    parser.h \
+    manager.h \
+    clientexecuter.h \
+    database.h
 
 RESOURCES += \
     configs.qrc

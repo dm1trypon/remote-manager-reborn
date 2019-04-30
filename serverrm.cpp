@@ -4,24 +4,30 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPair>
 
 #include "serverrm.h"
+#include "inits.h"
 
 ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
     QObject(parent),
     _pWebSocketServer(new QWebSocketServer(QStringLiteral("Service remote-manager server"),
-                                           QWebSocketServer::NonSecureMode, this))
+                                           QWebSocketServer::NonSecureMode, this)),
+    _parser(Inits::Instance().getParser()),
+    _manager(Inits::Instance().getManager())
 {
     qDebug() << "Starting Remote Manager server...";
     connect(_pWebSocketServer, &QWebSocketServer::newConnection, this, &ServerRM::slotNewConnection);
     connect(_pWebSocketServer, &QWebSocketServer::closed, this, &ServerRM::closed);
 
     if (!_pWebSocketServer->listen(QHostAddress::Any, nPort)) {
+        _isStarted = false;
         errorMessage();
-    } else {
-        qDebug() << "Success!";
-        qDebug().noquote() << "Service server listening on port:" << nPort;
+
+        return;
     }
+
+    qDebug().noquote() << "Service server listening on port:" << nPort;
 }
 
 ServerRM::~ServerRM()
@@ -38,9 +44,15 @@ bool ServerRM::isStarted()
 
 void ServerRM::slotReadyRead(const QString &data)
 {
-    QWebSocket *clientSocket = qobject_cast<QWebSocket *>(sender());
-
     qDebug().noquote() << "Data from client:" << data;
+
+    const QPair<QJsonObject, QString> dataPair = _parser->fromJson(data);
+
+    if (dataPair.first.isEmpty() || dataPair.second.isEmpty()) {
+        qWarning().noquote() << "Incorrect input data:" << data;
+    }
+
+    _manager->taskSwitch(dataPair.second, dataPair.first);
 }
 
 void ServerRM::errorMessage()
@@ -49,7 +61,6 @@ void ServerRM::errorMessage()
                << _pWebSocketServer->errorString();
 
     _pWebSocketServer->close();
-    _isStarted = false;
 
     return;
 }

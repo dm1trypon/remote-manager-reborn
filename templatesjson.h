@@ -18,7 +18,8 @@ private:
     QMap<QStringList, QString> _templates;
     QMap<QString, QString> _typeVar;
 
-    QJsonObject _config;
+    QJsonObject _configTemplates;
+    QJsonObject _configRM;
 
     void setTemplates();
 

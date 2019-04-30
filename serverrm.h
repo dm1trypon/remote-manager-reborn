@@ -1,6 +1,8 @@
 #ifndef SERVERRM_H
 #define SERVERRM_H
 
+#include "manager.h"
+
 #include <QNetworkSession>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
@@ -14,7 +16,6 @@ public:
     ~ServerRM();
 
     void sendToClient(const QString &data, QWebSocket *pClient); // send data to clients
-
     bool isStarted();
 private slots:
     void slotReadyRead(const QString &data);
@@ -29,6 +30,8 @@ private:
     QString _pathCert;
     QWebSocketServer *_pWebSocketServer;
     QList<QWebSocket *> _clientList;
+    Parser *_parser = nullptr;
+    Manager *_manager = nullptr;
 
     bool _isStarted = true;
 

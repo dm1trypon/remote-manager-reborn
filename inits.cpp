@@ -1,48 +1,159 @@
 #include "inits.h"
 
-Inits::Inits()
+Inits &Inits::Instance()
 {
+    static Inits theSingleInstance;
 
+    return theSingleInstance;
 }
 
 bool Inits::isInited()
 {
-    bool success = true;
+    qDebug() << "[Init configs]";
 
-    success = Configs::Instance().readConfigs("templates", ":/templates.json");
-    success = Configs::Instance().readConfigs("remote-manager", ":/remote-manager.cfg");
-
-    if (!success) {
+    if (!isInitConfigs()) {
+        qWarning() << "Init configs failed";
         return false;
     }
 
-    const QJsonObject configRM = Configs::Instance().getConfigs()["remote-manager"];
+    qDebug() << "Success!";
+    qDebug() << "[Init DB]";
 
-    if (!configRM.contains("service")) {
+    if (!isInitDB()) {
+        qWarning() << "Init DB failed";
         return false;
     }
 
-    if (!configRM.value("service").isObject()) {
+    qDebug() << "Success!";
+    qDebug() << "[Init parser]";
+
+    if (!isInitParser()) {
+        qWarning() << "Init parser failed";
         return false;
     }
 
-    const QJsonObject configService = configRM.value("service").toObject();
+    qDebug() << "Success!";
+    qDebug() << "[Init manager]";
 
-    if (!configService.contains("port")) {
+    if (!isInitManager()) {
+        qWarning() << "Init manager failed";
         return false;
     }
 
-    if (!configService.value("port").isDouble()) {
+    qDebug() << "Success!";
+    qDebug() << "[Init server]";
+
+    if (!isInitServer()) {
+        qWarning() << "Init server failed";
         return false;
     }
 
+    qDebug() << "Success!";
+
+    return true;
+}
+
+bool Inits::isInitConfigs()
+{
+    _configs = new Configs();
+
+    if (!_configs) {
+        return false;
+    }
+
+    if (!_configs->readConfigs("templates", ":/templates.json")) {
+        return false;
+    }
+
+    if (!_configs->readConfigs("remote-manager", ":/remote-manager.cfg")) {
+        return false;
+    }
+
+    if (!_configs->readConfigs("config", ":/config.json")) {
+        return false;
+    }
+
+    if (!_configs->isValidMainConfig()) {
+        qWarning() << "Config remote-manager.cfg is not valid!";
+
+        return false;
+    }
+
+    return true;
+}
+
+bool Inits::isInitDB()
+{
+    _database = new DataBase(_configs->getConfigs()["remote-manager"].value("mariadb").toObject());
+
+    if (!_database) {
+        return false;
+    }
+
+    if (!_database->isConnected()) {
+        qDebug() << "Can not connect to MariaDB!";
+        return false;
+    }
+
+    return true;
+}
+
+bool Inits::isInitParser()
+{
+    _parser = new Parser();
+
+    if (!_parser) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Inits::isInitManager()
+{
+    _manager = new Manager();
+
+    if (!_manager) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Inits::isInitServer()
+{
+    const QJsonObject configService = _configs->getConfigs()["remote-manager"].value("service").toObject();
     const quint16 port = static_cast<quint16>(configService.value("port").toDouble());
 
-    _serverRM = new ServerRM(port);
+    _serverRM = new ServerRM(port, _parser);
+
+    if (!_serverRM) {
+        return false;
+    }
 
     if (!_serverRM->isStarted()) {
         return false;
     }
 
-    return success;
+    return true;
+}
+
+DataBase* Inits::getDataBase()
+{
+    return _database;
+}
+
+Parser* Inits::getParser()
+{
+    return _parser;
+}
+
+Configs* Inits::getConfigs()
+{
+    return _configs;
+}
+
+Manager* Inits::getManager()
+{
+    return _manager;
 }

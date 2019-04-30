@@ -6,13 +6,15 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    Inits inits;
+    qDebug() << "[[[ STARTING REMOTE MANAGER SERVICE ]]]";
 
-    if (!inits.isInited()) {
-        qWarning() << "Service start failed!";
+    if (!Inits::Instance().isInited()) {
+        qWarning() << "[[[ SERVICE START FAILED ]]]";
 
         return -1;
     }
+
+    qDebug() << "[[[ SERVICE HAS BEEN STARTED ]]]";
 
     return a.exec();
 }
