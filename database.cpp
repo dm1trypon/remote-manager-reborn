@@ -1,9 +1,22 @@
 #include "database.h"
 #include "configs.h"
 
+#include <QDateTime>
+#include <QMetaObject>
+
+#define logDataBase qDebug().noquote() << DataBase::getDataTime() << "[DataBase]: >>"
+#define warnDataBase qWarning().noquote() << DataBase::getDataTime() << "[DataBase]: >>"
+#define errDataBase qCritical().noquote() << DataBase::getDataTime() << "[DataBase]: >>"
+
 DataBase::DataBase(const QJsonObject configDB)
 {
     setDataBase(configDB);
+    connect(&_tCheckDbConnection, &QTimer::timeout, this, &DataBase::checkConnection);
+}
+
+QString DataBase::getDataTime()
+{
+    return QDateTime::currentDateTime().toTimeSpec(Qt::OffsetFromUTC).toString("[dd.mm.yy hh:mm:ss]");
 }
 
 void DataBase::setDataBase(const QJsonObject configDB)
@@ -19,10 +32,24 @@ void DataBase::setDataBase(const QJsonObject configDB)
     _db.setPassword(configDB.value("db_pass").toString());
     _db.setPort(static_cast<int>(configDB.value("db_port").toDouble()));
 
-    qDebug().noquote() << "Config for MySql connection:"
+    logDataBase << "Config for MySql connection:"
              << "\nDataBase host:" << configDB.value("db_host").toString()
              << "\nDataBase user:" << configDB.value("db_user").toString()
              << "\nDataBase port:" << configDB.value("db_port").toDouble();
+
+    _db.open();
+    _tCheckDbConnection.start(5000);
+}
+
+void DataBase::checkConnection()
+{
+    if (_db.isOpen()) {
+        return;
+    }
+
+    errDataBase << "Connection to database is lost, reconnect...";
+
+    _db.open();
 }
 
 QString DataBase::queryGetIp(const QString &hallId)
@@ -30,11 +57,14 @@ QString DataBase::queryGetIp(const QString &hallId)
     return "SELECT ip FROM db_game.clients WHERE hall_id=" + hallId;
 }
 
-QStringList DataBase::getHostsList(const QString &hallId)
+QJsonArray DataBase::getHostsList(const QString &hallId)
 {
-    QSqlQuery query(queryGetIp(hallId));
+    if (!_db.isOpen()) {
+        return {};
+    }
 
-    QStringList hosts;
+    QSqlQuery query(queryGetIp(hallId));
+    QJsonArray hosts;
 
     while (query.next()) {
         if (!query.value(0).isValid()) {
@@ -52,5 +82,6 @@ QStringList DataBase::getHostsList(const QString &hallId)
 }
 
 bool DataBase::isConnected() {
-    return _db.open();
+    return true;
+//    return _db.isOpen();
 }

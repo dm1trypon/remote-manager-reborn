@@ -11,6 +11,10 @@ Parser::Parser()
 
 }
 
+bool Parser::isReadyTemplatesJson() {
+    return _templatesJson.isReady();
+}
+
 QJsonArray Parser::getBash(const QString &method)
 {
     Configs *configs = Inits::Instance().getConfigs();
@@ -18,7 +22,7 @@ QJsonArray Parser::getBash(const QString &method)
     const QJsonValue valueMethod =
             configs->getConfigs()["remote-manager"].value("commands").toObject().value(method);
 
-    return valueMethod.toArray();;
+    return valueMethod.toArray();
 }
 
 QString Parser::compare(const QJsonObject dataJsObj, const QJsonArray bashes)
@@ -54,7 +58,7 @@ QPair<QJsonObject, QString> Parser::fromJson(const QString &data)
     }
 
     const QJsonObject dataJsonObj = dataJsonDoc.object();
-    const QString &type = _templateJson.getNameTemplate(dataJsonObj);
+    const QString &type = _templatesJson.getNameTemplate(dataJsonObj);
 
     if (type.isEmpty()) {
         return {{}, ""};

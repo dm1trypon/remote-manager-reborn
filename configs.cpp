@@ -64,6 +64,10 @@ bool Configs::isValidMainConfig()
         return false;
     }
 
+    if (!isValidObject(mainConf, checkConf, "commands")) {
+        return false;
+    }
+
     return true;
 }
 
@@ -113,6 +117,14 @@ bool Configs::isValidObject(const QJsonObject mainConf, const QJsonObject checkC
     foreach(const QString &key, fieldConf.keys()) {
         if (fieldConf[key].toVariant().typeName() != types.value(key).toString()) {
             return false;
+        }
+
+        if (fieldConf[key].isArray()) {
+            foreach(const QJsonValue value, fieldConf.value(key).toArray()) {
+                if (value.toVariant().typeName() != QStringLiteral("QString")) {
+                    return false;
+                }
+            }
         }
     }
 

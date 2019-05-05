@@ -57,8 +57,7 @@ void ServerRM::slotReadyRead(const QString &data)
 
 void ServerRM::errorMessage()
 {
-    qWarning() << "Server Error:" << "Unable to start the server:"
-               << _pWebSocketServer->errorString();
+    qWarning() << "Server Error:" << "Unable to start the server:" << _pWebSocketServer->errorString();
 
     _pWebSocketServer->close();
 

@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "database.h"
 #include "manager.h"
+#include "sshexecuter.h"
 
 #include <QPointer>
 
@@ -21,6 +22,7 @@ public:
     Parser *getParser();
     Configs *getConfigs();
     Manager *getManager();
+    SshExecuter *getSshExecuter();
 private:
     Inits(const Inits& root) = delete;
     Inits& operator = (const Inits&) = delete;
@@ -30,11 +32,15 @@ private:
     QPointer<DataBase> _database = nullptr;
     QPointer<Configs> _configs = nullptr;
     QPointer<Manager> _manager = nullptr;
+    QPointer<SshExecuter> _sshExecuter = nullptr;
+
     bool isInitConfigs();
     bool isInitDB();
     bool isInitParser();
     bool isInitManager();
     bool isInitServer();
+    bool isInitSshExecuter();
+    bool isInitLog();
 };
 
 #endif // INITS_H

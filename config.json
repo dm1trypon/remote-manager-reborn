@@ -1,13 +1,20 @@
 {
     "main": ["service", "mariadb", "commands"],
     "mariadb": ["db_host", "db_user", "db_pass", "db_port"],
-    "service": ["port"],
+    "service": ["port", "ex_port"],
+    "commands": ["xorg", "reboot", "kind", "get_update", "shell"],
     "types": {
         "port": "double",
+        "ex_port": "double",
         "db_options": "QString",
         "db_host": "QString",
         "db_user": "QString",
         "db_pass": "QString",
-        "db_port": "double"
+        "db_port": "double",
+        "xorg": "QVariantList",
+        "reboot": "QVariantList",
+        "kind": "QVariantList",
+        "get_update": "QVariantList",
+        "shell": "QVariantList"
     }
 }

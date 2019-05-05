@@ -23,5 +23,8 @@
         "bash": "QVariantList",
         "type": "QString",
         "ssh": "bool"
+    },
+    "check_data": {
+        "ip": ["host_ex", "host_ping", "host_ssh"]
     }
 }

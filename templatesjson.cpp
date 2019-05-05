@@ -23,14 +23,12 @@ void TemplatesJson::readConfig()
 }
 
 QString TemplatesJson::getNameTemplate(const QJsonObject dataJsObj) {
-    if (!_configRM.keys().contains(dataJsObj.value("method").toString())) {
+    if (!_configRM.value("commands").toObject().keys().contains(dataJsObj.value("method").toString())) {
         return "";
     }
 
     QStringList fields = dataJsObj.keys();
     fields.sort();
-
-    qDebug() << fields << _templates.keys();
 
     if (!_templates.contains(fields)) {
         qDebug() << "Is not contains!";
@@ -46,16 +44,46 @@ QString TemplatesJson::getNameTemplate(const QJsonObject dataJsObj) {
     return _templates[fields];
 }
 
+bool TemplatesJson::isReady()
+{
+    if (_templates.isEmpty()) {
+        return false;
+    }
+
+    if (_typeVar.isEmpty()) {
+        return false;
+    }
+
+    return true;
+}
+
 bool TemplatesJson::isCorrectValues(const QJsonObject dataJsObj) {
     foreach(const QString &field, dataJsObj.keys()) {
-        qDebug() << _typeVar[field] << dataJsObj.value(field).toVariant().typeName();
         if (_typeVar[field] != dataJsObj.value(field).toVariant().typeName()) {
             return false;
         }
 
-        if (field == "bash") {
-            foreach(const QVariant var, dataJsObj.value(field).toArray()) {
-                if (var.typeName() != QStringLiteral("QString")) {
+        bool isCheckIp = false;
+
+        if (dataJsObj[field].isArray()) {
+            if (_configTemplates.value("check_data").toObject().value("ip").toArray().contains(field)) {
+                isCheckIp = true;
+            }
+
+            foreach(const QJsonValue value, dataJsObj.value(field).toArray()) {
+                if (value.toVariant().typeName() != QStringLiteral("QString")) {
+                    return false;
+                }
+
+                if (!isCheckIp) {
+                    continue;
+                }
+
+                qDebug() << value.toString();
+
+                if (!isValidIp(value.toString())) {
+                    qWarning().noquote() << field << "data is invalid:" << value.toString();
+
                     return false;
                 }
             }
@@ -71,7 +99,7 @@ bool TemplatesJson::isValidFields()
         return false;
     }
 
-    const QStringList fields{"templates", "types"};
+    const QStringList fields{"templates", "types", "check_data"};
 
     foreach(const QString &field , fields) {
         if (!_configTemplates.contains(field)) {
@@ -95,7 +123,30 @@ bool TemplatesJson::isValidFields()
         }
     }
 
+    foreach(const QJsonValue value, _configTemplates.value("check_data").toObject()) {
+        if (!value.isArray()) {
+            return false;
+        }
+    }
+
     return true;
+}
+
+bool TemplatesJson::isValidIp(const QString &ip)
+{
+    const QStringList part = ip.split(".");
+
+    if (part.contains("")) {
+        return false;
+    }
+
+    if (part.count() != 4) {
+        return false;
+    }
+
+    const QRegExp rx(IP_MASK);
+
+    return rx.exactMatch(ip);
 }
 
 void TemplatesJson::setTemplates()

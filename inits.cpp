@@ -41,6 +41,14 @@ bool Inits::isInited()
     }
 
     qDebug() << "Success!";
+    qDebug() << "[Init SSH executer]";
+
+    if (!isInitSshExecuter()) {
+        qWarning() << "Init SSH executer failed";
+        return false;
+    }
+
+    qDebug() << "Success!";
     qDebug() << "[Init server]";
 
     if (!isInitServer()) {
@@ -106,6 +114,10 @@ bool Inits::isInitParser()
         return false;
     }
 
+    if (!_parser->isReadyTemplatesJson()) {
+        return false;
+    }
+
     return true;
 }
 
@@ -138,6 +150,17 @@ bool Inits::isInitServer()
     return true;
 }
 
+bool Inits::isInitSshExecuter()
+{
+    _sshExecuter = new SshExecuter();
+
+    if (!_sshExecuter) {
+        return false;
+    }
+
+    return true;
+}
+
 DataBase* Inits::getDataBase()
 {
     return _database;
@@ -156,4 +179,9 @@ Configs* Inits::getConfigs()
 Manager* Inits::getManager()
 {
     return _manager;
+}
+
+SshExecuter *Inits::getSshExecuter()
+{
+    return _sshExecuter;
 }

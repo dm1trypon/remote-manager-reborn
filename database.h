@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QtSql>
+#include <QTimer>
 
 class DataBase : public QObject
 {
@@ -11,11 +12,15 @@ public:
     DataBase(const QJsonObject configDB);
 
     bool isConnected();
-    QStringList getHostsList(const QString &hallId);
+    QJsonArray getHostsList(const QString &hallId);
+private slots:
+    void checkConnection();
 private:
+    QTimer _tCheckDbConnection;
     QSqlDatabase _db;
     void setDataBase(const QJsonObject configDB);
     QString queryGetIp(const QString &hallId);
+    static QString getDataTime();
 };
 
 #endif // DATABASE_H

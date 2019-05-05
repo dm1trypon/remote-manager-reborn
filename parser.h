@@ -10,7 +10,7 @@ class Parser : public QObject
 {
     Q_OBJECT
 private:
-    TemplatesJson _templateJson;
+    TemplatesJson _templatesJson;
 
     bool isValidJson(const QJsonDocument jsonDoc);
 
@@ -22,6 +22,7 @@ public:
     QJsonArray getBash(const QString &method);
     QString compare(const QJsonObject dataJsObj, const QJsonArray bashes);
     QPair<QJsonObject, QString> fromJson(const QString &data);
+    bool isReadyTemplatesJson();
 };
 
 #endif // PARSER_H
