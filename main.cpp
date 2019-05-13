@@ -1,4 +1,5 @@
 #include "inits.h"
+#include <QJsonArray>
 
 #include <QCoreApplication>
 
@@ -9,7 +10,7 @@ int main(int argc, char *argv[])
     qDebug() << "[[[ STARTING REMOTE MANAGER SERVICE ]]]";
 
     if (!Inits::Instance().isInited()) {
-        qWarning() << "[[[ SERVICE START FAILED ]]]";
+        qCritical() << "[[[ SERVICE START FAILED ]]]";
 
         return -1;
     }

@@ -12,7 +12,7 @@ class ClientExecuter : public QObject
 {
     Q_OBJECT
 public:
-    explicit ClientExecuter(const QUrl &url, const QString &dataIn);
+    explicit ClientExecuter(const QUrl &url, const QString &dataIn, QObject *parent);
     ~ClientExecuter();
 
 private slots:

@@ -1,16 +1,19 @@
 #include "manager.h"
 #include "clientexecuter.h"
 #include "inits.h"
+#include "log.h"
 #include "database.h"
 
 #include <QJsonDocument>
 #include <QUrl>
 #include <QJsonArray>
 
-Manager::Manager()
+Manager::Manager(QObject *parent) : QObject (parent)
 {
     Configs *configs = Inits::Instance().getConfigs();
     _sshExecuter = Inits::Instance().getSshExecuter();
+
+    connect(_sshExecuter, &SshExecuter::finished, this, &Manager::onSshFinished);
 
     const QJsonObject service = configs->getConfigs()["remote-manager"].value("service").toObject();
 
@@ -38,7 +41,15 @@ void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj)
         hosts = getHostsList(hall);
 
         if (hosts.isEmpty()) {
-            qWarning() << "Can not find hosts in hall:" << hall;
+            warnManager << "Can not find hosts in hall:" << hall;
+
+            return;
+        }
+    }
+
+    if (dataJsonObj.contains("ssh")) {
+        if (dataJsonObj.value("ssh").toBool()) {
+            sshTask(hosts, bashes);
 
             return;
         }
@@ -65,29 +76,38 @@ QJsonArray Manager::getHostsList(const QString &hallId) {
     return dataBase->getHostsList(hallId);
 }
 
+void Manager::onSshFinished(const QString &result)
+{
+    infoManager << "Finished ssh bash:" << result;
+}
+
 void Manager::executerTask(const QJsonArray hosts, const QString &dataIn)
 {
-    foreach(const QJsonValue ip, hosts) {
-        ClientExecuter clientExecuter(QUrl("wss://" + ip.toString() + ":"
-                                           + QString::number(_port)),  dataIn);
+    const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts);
+
+    foreach(const QString ip, hostsStatus.keys()) {
+        if (!hostsStatus[ip]) {
+            infoManager << "Host" << ip << "is offline";
+
+            continue;
+        }
+
+        ClientExecuter clientExecuter(QUrl("wss://" + ip + ":"
+                                           + QString::number(_port)),  dataIn, this);
     }
 }
 
 void Manager::sshTask(const QJsonArray hosts, const QJsonArray bashes)
 {
-    foreach(const QJsonValue ip, hosts) {
-        _sshExecuter->toSsh(ip.toString(), bashes);
+    const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts);
+
+    foreach(const QString ip, hostsStatus.keys()) {
+        if (!hostsStatus[ip]) {
+            infoManager << "Host" << ip << "is offline";
+
+            continue;
+        }
+
+        _sshExecuter->toSsh(ip, bashes);
     }
 }
-
-
-//"hallEx": ["method", "hall", "ssh"],
-//"hallSsh": ["method", "hall", "ssh"],
-//"ssh": ["method", "host_ssh"],
-//"hostPing": ["method", "host_ping"],
-//"sshShell": ["method", "host_ssh", "bash"],
-//"hallExShell": ["method", "hall", "bash", "ssh"],
-//"hallSshShell": ["method", "hall", "bash", "ssh"],
-//"sshKind": ["method", "type", "host_ssh"],
-//"hallExKind": ["method", "type", "hall", "ssh"],
-//"hallSshKind": ["method", "type", "hall", "ssh"]

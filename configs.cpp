@@ -1,10 +1,10 @@
 #include "configs.h"
+#include "log.h"
 
 #include <QFile>
 #include <QJsonArray>
-#include <QDebug>
 
-Configs::Configs()
+Configs::Configs(QObject *parent) : QObject(parent)
 {
 
 }
@@ -15,7 +15,7 @@ bool Configs::readConfigs(const QString &name, const QString &path)
     QJsonDocument docJsonConfig;
 
     if (!(config.open(QIODevice::ReadOnly | QIODevice::Text))) {
-        qWarning().noquote() << "Can not open" << name << "config on path:" << path;
+        warnConfigs << "Can not open" << name << "config on path:" << path;
 
         return false;
     }
@@ -25,7 +25,7 @@ bool Configs::readConfigs(const QString &name, const QString &path)
     config.close();
 
     if (!isValidConfig(docJsonConfig)) {
-        qWarning().noquote() << "Wrong" << name << "config file:" << path;
+        warnConfigs << "Wrong" << name << "config file:" << path;
 
         return false;
     }
@@ -35,37 +35,87 @@ bool Configs::readConfigs(const QString &name, const QString &path)
     return true;
 }
 
+bool Configs::isCorrectSchemeConfig(const QJsonObject checkConf)
+{
+    foreach(const QString field, checkConf.keys()) {
+        if (field == "types") {
+            if (!checkConf[field].isObject()) {
+                errorConfigs << field << "is not an object";
+                return false;
+            }
+
+            foreach(const QJsonValue fieldTypes, checkConf[field].toObject()) {
+                if (!fieldTypes.isString()) {
+                    errorConfigs << fieldTypes << "is not a string";
+                    return false;
+                }
+            }
+        } else {
+            if (!checkConf[field].isArray()) {
+                errorConfigs << field << "is not an array";
+                return false;
+            }
+
+            foreach(const QJsonValue fieldTypes, checkConf[field].toArray()) {
+                if (!fieldTypes.isString()) {
+                    errorConfigs << fieldTypes << "is not a string";
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 bool Configs::isValidMainConfig()
 {
     const QJsonObject mainConf = _configs["remote-manager"];
     const QJsonObject checkConf = _configs["config"];
 
-    if (!checkConf.value("main").isArray()) {
+    if (!isCorrectSchemeConfig(checkConf)) {
+        errorConfigs << "Schema config failed";
         return false;
     }
 
     const QJsonArray fieldsArr = checkConf.value("main").toArray();
 
     if (!isValidFields(mainConf, fieldsArr)) {
+        errorConfigs << "Is not valid fields:" << mainConf << ". Template:" << fieldsArr;
         return false;
     }
 
-    foreach(const QJsonValue value, mainConf) {
-        if (!value.isObject()) {
+    const QJsonObject types = checkConf.value("types").toObject();
+
+    foreach(const QString field, mainConf.keys()) {
+        if (mainConf[field].toVariant().typeName() != types.value(field).toString()) {
             return false;
+        }
+
+        if (mainConf[field].isObject()) {
+            if (!isValidObject(mainConf, checkConf, field)) {
+                errorConfigs << field << "is not valid object";
+                return false;
+            }
+        }
+
+        if (mainConf[field].isArray()) {
+            if (!isValidArray(mainConf[field].toArray())) {
+               errorConfigs << field << "is not valid array";
+                return false;
+            }
         }
     }
 
-    if (!isValidObject(mainConf, checkConf, "mariadb")) {
-        return false;
-    }
+    return true;
+}
 
-    if (!isValidObject(mainConf, checkConf, "service")) {
-        return false;
-    }
-
-    if (!isValidObject(mainConf, checkConf, "commands")) {
-        return false;
+bool Configs::isValidArray(const QJsonArray fieldArr)
+{
+    foreach(const QJsonValue valueConf, fieldArr) {
+        if (!valueConf.isString()) {
+            return false;
+        }
     }
 
     return true;
@@ -92,38 +142,43 @@ bool Configs::isValidFields(const QJsonObject fieldConf, const QJsonArray fields
 
 bool Configs::isValidObject(const QJsonObject mainConf, const QJsonObject checkConf, const QString &name)
 {
-    if (!mainConf.value(name).isObject()) {
-        return false;
-    }
-
-    const QJsonObject fieldConf = mainConf.value(name).toObject();
-
-    if (!checkConf.value(name).isArray()) {
-        return false;
-    }
-
     const QJsonArray fieldCheck = checkConf.value(name).toArray();
 
-    if (!isValidFields(fieldConf, fieldCheck)) {
-        return false;
+    QJsonArray fieldConfArr;
+    QJsonObject fieldConfObj;
+
+    if (mainConf.value(name).isObject()) {
+        fieldConfObj = mainConf.value(name).toObject();
+
+        if (!isValidFields(fieldConfObj, fieldCheck)) {
+            return false;
+        }
     }
 
-    if (!checkConf.value("types").isObject()) {
-        return false;
+    if (mainConf.value(name).isArray()) {
+        fieldConfArr = mainConf.value(name).toArray();
     }
 
     const QJsonObject types = checkConf.value("types").toObject();
 
-    foreach(const QString &key, fieldConf.keys()) {
-        if (fieldConf[key].toVariant().typeName() != types.value(key).toString()) {
+    if (!fieldConfArr.isEmpty()) {
+        foreach(const QJsonValue val, fieldConfArr) {
+            if (!val.isString()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    foreach(const QString &key, fieldConfObj.keys()) {
+        if (fieldConfObj[key].toVariant().typeName() != types.value(key).toString()) {
             return false;
         }
 
-        if (fieldConf[key].isArray()) {
-            foreach(const QJsonValue value, fieldConf.value(key).toArray()) {
-                if (value.toVariant().typeName() != QStringLiteral("QString")) {
-                    return false;
-                }
+        if (fieldConfObj[key].isArray()) {
+            if (!isValidArray(fieldConfObj[key].toArray())) {
+                return false;
             }
         }
     }

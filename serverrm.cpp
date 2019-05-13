@@ -1,13 +1,14 @@
 #include "QtWebSockets/qwebsocketserver.h"
 #include "QtWebSockets/qwebsocket.h"
 
+#include "serverrm.h"
+#include "inits.h"
+#include "log.h"
+
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QPair>
-
-#include "serverrm.h"
-#include "inits.h"
 
 ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
     QObject(parent),
@@ -16,7 +17,7 @@ ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
     _parser(Inits::Instance().getParser()),
     _manager(Inits::Instance().getManager())
 {
-    qDebug() << "Starting Remote Manager server...";
+    infoServerRM << "Starting Remote Manager server...";
     connect(_pWebSocketServer, &QWebSocketServer::newConnection, this, &ServerRM::slotNewConnection);
     connect(_pWebSocketServer, &QWebSocketServer::closed, this, &ServerRM::closed);
 
@@ -27,12 +28,12 @@ ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
         return;
     }
 
-    qDebug().noquote() << "Service server listening on port:" << nPort;
+    infoServerRM << "Service server listening on port:" << nPort;
 }
 
 ServerRM::~ServerRM()
 {
-    qWarning() << "WebSocket closed. Terminating service...";
+    errorServerRM << "WebSocket closed. Terminating service...";
 
     _pWebSocketServer->close();
 }
@@ -44,12 +45,14 @@ bool ServerRM::isStarted()
 
 void ServerRM::slotReadyRead(const QString &data)
 {
-    qDebug().noquote() << "Data from client:" << data;
+    infoServerRM << "Data from client:" << data;
 
     const QPair<QJsonObject, QString> dataPair = _parser->fromJson(data);
 
     if (dataPair.first.isEmpty() || dataPair.second.isEmpty()) {
-        qWarning().noquote() << "Incorrect input data:" << data;
+        errorServerRM << "Incorrect input data:" << data;
+
+        return;
     }
 
     _manager->taskSwitch(dataPair.second, dataPair.first);
@@ -57,7 +60,7 @@ void ServerRM::slotReadyRead(const QString &data)
 
 void ServerRM::errorMessage()
 {
-    qWarning() << "Server Error:" << "Unable to start the server:" << _pWebSocketServer->errorString();
+    errorServerRM << "Server Error:" << "Unable to start the server:" << _pWebSocketServer->errorString();
 
     _pWebSocketServer->close();
 
@@ -70,8 +73,8 @@ void ServerRM::slotNewConnection()
 
     _clientList << clientSocket;
 
-    qDebug() << "Client" << clientSocket << "has been connected!";
-    qDebug() << "Connected clients:" << _clientList;
+    infoServerRM << "Client" << clientSocket->requestUrl().host() << "has been connected!";
+    infoServerRM << "Connected clients:" << _clientList;
 
     connect(clientSocket, &QWebSocket::textMessageReceived, this, &ServerRM::slotReadyRead);
     connect(clientSocket, &QWebSocket::disconnected, this, &ServerRM::slotDisconnected);
@@ -88,8 +91,8 @@ void ServerRM::slotDisconnected()
 
     _clientList.removeOne(clientSocket);
 
-    qDebug() << "Client" << clientSocket << "has been disconnected!";
-    qDebug() << "Connected clients" << _clientList;
+    infoServerRM << "Client" << clientSocket << "has been disconnected!";
+    infoServerRM << "Connected clients" << _clientList;
 
     clientSocket->deleteLater();
 }

@@ -1,4 +1,5 @@
 #include "inits.h"
+#include "log.h"
 
 Inits &Inits::Instance()
 {
@@ -9,61 +10,61 @@ Inits &Inits::Instance()
 
 bool Inits::isInited()
 {
-    qDebug() << "[Init configs]";
+    infoInitSrv << "[Init configs]";
 
     if (!isInitConfigs()) {
-        qWarning() << "Init configs failed";
+        errorInitSrv << "Init configs failed";
         return false;
     }
 
-    qDebug() << "Success!";
-    qDebug() << "[Init DB]";
+    infoInitSrv << "Success!";
+    infoInitSrv << "[Init DB]";
 
     if (!isInitDB()) {
-        qWarning() << "Init DB failed";
+        errorInitSrv << "Init DB failed";
         return false;
     }
 
-    qDebug() << "Success!";
-    qDebug() << "[Init parser]";
+    infoInitSrv << "Success!";
+    infoInitSrv << "[Init parser]";
 
     if (!isInitParser()) {
-        qWarning() << "Init parser failed";
+        errorInitSrv << "Init parser failed";
         return false;
     }
 
-    qDebug() << "Success!";
-    qDebug() << "[Init manager]";
-
-    if (!isInitManager()) {
-        qWarning() << "Init manager failed";
-        return false;
-    }
-
-    qDebug() << "Success!";
-    qDebug() << "[Init SSH executer]";
+    infoInitSrv << "Success!";
+    infoInitSrv << "[Init SSH executer]";
 
     if (!isInitSshExecuter()) {
-        qWarning() << "Init SSH executer failed";
+        errorInitSrv << "Init SSH executer failed";
         return false;
     }
 
-    qDebug() << "Success!";
-    qDebug() << "[Init server]";
+    infoInitSrv << "Success!";
+    infoInitSrv << "[Init manager]";
+
+    if (!isInitManager()) {
+        errorInitSrv << "Init manager failed";
+        return false;
+    }
+
+    infoInitSrv << "Success!";
+    infoInitSrv << "[Init server]";
 
     if (!isInitServer()) {
-        qWarning() << "Init server failed";
+        errorInitSrv << "Init server failed";
         return false;
     }
 
-    qDebug() << "Success!";
+    infoInitSrv << "Success!";
 
     return true;
 }
 
 bool Inits::isInitConfigs()
 {
-    _configs = new Configs();
+    _configs = new Configs(nullptr);
 
     if (!_configs) {
         return false;
@@ -82,7 +83,7 @@ bool Inits::isInitConfigs()
     }
 
     if (!_configs->isValidMainConfig()) {
-        qWarning() << "Config remote-manager.cfg is not valid!";
+        errorInitSrv << "Config remote-manager.cfg is not valid!";
 
         return false;
     }
@@ -92,14 +93,14 @@ bool Inits::isInitConfigs()
 
 bool Inits::isInitDB()
 {
-    _database = new DataBase(_configs->getConfigs()["remote-manager"].value("mariadb").toObject());
+    _database = new DataBase(_configs->getConfigs()["remote-manager"].value("mariadb").toObject(), nullptr);
 
     if (!_database) {
         return false;
     }
 
     if (!_database->isConnected()) {
-        qDebug() << "Can not connect to MariaDB!";
+        infoInitSrv << "Can not connect to MariaDB!";
         return false;
     }
 
@@ -108,7 +109,7 @@ bool Inits::isInitDB()
 
 bool Inits::isInitParser()
 {
-    _parser = new Parser();
+    _parser = new Parser(nullptr);
 
     if (!_parser) {
         return false;
@@ -123,7 +124,7 @@ bool Inits::isInitParser()
 
 bool Inits::isInitManager()
 {
-    _manager = new Manager();
+    _manager = new Manager(nullptr);
 
     if (!_manager) {
         return false;
@@ -152,7 +153,7 @@ bool Inits::isInitServer()
 
 bool Inits::isInitSshExecuter()
 {
-    _sshExecuter = new SshExecuter();
+    _sshExecuter = new SshExecuter(nullptr);
 
     if (!_sshExecuter) {
         return false;
@@ -181,7 +182,7 @@ Manager* Inits::getManager()
     return _manager;
 }
 
-SshExecuter *Inits::getSshExecuter()
+SshExecuter* Inits::getSshExecuter()
 {
     return _sshExecuter;
 }

@@ -1,14 +1,11 @@
 #include "database.h"
 #include "configs.h"
+#include "log.h"
 
 #include <QDateTime>
 #include <QMetaObject>
 
-#define logDataBase qDebug().noquote() << DataBase::getDataTime() << "[DataBase]: >>"
-#define warnDataBase qWarning().noquote() << DataBase::getDataTime() << "[DataBase]: >>"
-#define errDataBase qCritical().noquote() << DataBase::getDataTime() << "[DataBase]: >>"
-
-DataBase::DataBase(const QJsonObject configDB)
+DataBase::DataBase(const QJsonObject configDB, QObject *parent) : QObject(parent)
 {
     setDataBase(configDB);
     connect(&_tCheckDbConnection, &QTimer::timeout, this, &DataBase::checkConnection);
@@ -32,12 +29,13 @@ void DataBase::setDataBase(const QJsonObject configDB)
     _db.setPassword(configDB.value("db_pass").toString());
     _db.setPort(static_cast<int>(configDB.value("db_port").toDouble()));
 
-    logDataBase << "Config for MySql connection:"
+    infoDataBase << "Config for MySql connection:"
              << "\nDataBase host:" << configDB.value("db_host").toString()
              << "\nDataBase user:" << configDB.value("db_user").toString()
              << "\nDataBase port:" << configDB.value("db_port").toDouble();
 
     _db.open();
+
     _tCheckDbConnection.start(5000);
 }
 
@@ -47,7 +45,7 @@ void DataBase::checkConnection()
         return;
     }
 
-    errDataBase << "Connection to database is lost, reconnect...";
+    errorDataBase << "Connection to database is lost, reconnect...";
 
     _db.open();
 }
@@ -71,7 +69,7 @@ QJsonArray DataBase::getHostsList(const QString &hallId)
             continue;
         }
 
-        if (!query.value(0).isNull()) {
+        if (query.value(0).isNull()) {
             continue;
         }
 
@@ -82,6 +80,5 @@ QJsonArray DataBase::getHostsList(const QString &hallId)
 }
 
 bool DataBase::isConnected() {
-    return true;
-//    return _db.isOpen();
+    return _db.isOpen();
 }

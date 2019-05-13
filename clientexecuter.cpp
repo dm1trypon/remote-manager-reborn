@@ -1,16 +1,18 @@
 #include "clientexecuter.h"
 #include "inits.h"
+#include "log.h"
 
 #include <QtCore/QDebug>
 #include <QtWebSockets/QWebSocket>
 #include <QCoreApplication>
 
-ClientExecuter::ClientExecuter(const QUrl &url, const QString &dataIn):
+ClientExecuter::ClientExecuter(const QUrl &url, const QString &dataIn, QObject *parent):
+    QObject(parent),
     _parser(Inits::Instance().getParser()),
     _dataIn(dataIn),
     _url(url.toDisplayString())
 {
-    qDebug().noquote() << "Attemt connect to server:" << url << ". Data:" << dataIn;
+    infoClientEx << "Attemt connect to server:" << url << ". Data:" << dataIn;
     connect(&_webSocket, &QWebSocket::connected, this, &ClientExecuter::onConnected);
 
     typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
@@ -21,7 +23,7 @@ ClientExecuter::ClientExecuter(const QUrl &url, const QString &dataIn):
     connect(&_webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &ClientExecuter::onSslErrors);
     connect(&_webSocket, static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),
             [=](QAbstractSocket::SocketError) {
-        qWarning() << "Host:" << _url << ". Error:" << _webSocket.errorString();
+        warnClientEx << "Host:" << _url << ". Error:" << _webSocket.errorString();
 
         deleteLater();
 
@@ -29,24 +31,24 @@ ClientExecuter::ClientExecuter(const QUrl &url, const QString &dataIn):
     });
 
     _webSocket.open(QUrl(url));
-    qDebug().noquote() << "Connection open to host:" << _url;
 }
 
 ClientExecuter::~ClientExecuter()
 {
-    qDebug().noquote() << "Connection to host" << _url << "has been closed.";
+    infoClientEx << "Connection to host" << _url << "has been closed.";
 }
 
 void ClientExecuter::onConnected()
 {
     connect(&_webSocket, &QWebSocket::textMessageReceived, this, &ClientExecuter::onTextMessageReceived);
 
+    infoClientEx << "Connection open to host:" << _url;
     _webSocket.sendTextMessage(_dataIn);
 }
 
 void ClientExecuter::onTextMessageReceived(const QString &dataOut)
 {
-    qDebug().noquote() << "Message received:" << dataOut;
+    infoClientEx << "Message received:" << dataOut;
 
     if (_parser->isFinished(dataOut)) {
         deleteLater();

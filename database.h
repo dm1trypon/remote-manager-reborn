@@ -9,7 +9,7 @@ class DataBase : public QObject
 {
     Q_OBJECT
 public:
-    DataBase(const QJsonObject configDB);
+    DataBase(const QJsonObject configDB, QObject *parent);
 
     bool isConnected();
     QJsonArray getHostsList(const QString &hallId);

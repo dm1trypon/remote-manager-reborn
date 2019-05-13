@@ -25,7 +25,8 @@ SOURCES += \
     manager.cpp \
     clientexecuter.cpp \
     database.cpp \
-    sshexecuter.cpp
+    sshexecuter.cpp \
+    log.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -41,7 +42,8 @@ HEADERS += \
     manager.h \
     clientexecuter.h \
     database.h \
-    sshexecuter.h
+    sshexecuter.h \
+    log.h
 
 RESOURCES += \
     configs.qrc

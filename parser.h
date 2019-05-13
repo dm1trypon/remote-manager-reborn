@@ -15,7 +15,7 @@ private:
     bool isValidJson(const QJsonDocument jsonDoc);
 
 public:
-    Parser();
+    Parser(QObject *parent);
 
     bool isValidResult(const QString &dataOut, const QString &dataIn);
     bool isFinished(const QString &dataOut);

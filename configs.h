@@ -10,7 +10,7 @@ class Configs : public QObject
 {
     Q_OBJECT
 public:
-    Configs();
+    Configs(QObject *parent);
 
     bool readConfigs(const QString &name, const QString &path);
     QMap<QString, QJsonObject> getConfigs();
@@ -23,6 +23,8 @@ private:
 
     bool isValidObject(const QJsonObject mainConf, const QJsonObject checkConf, const QString &name);
     bool isValidFields(const QJsonObject fieldConf, const QJsonArray fieldsArr);
+    bool isCorrectSchemeConfig(const QJsonObject checkConf);
+    bool isValidArray(const QJsonArray fieldArr);
 };
 
 #endif // CONFIGS_H

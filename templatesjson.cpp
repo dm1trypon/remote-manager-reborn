@@ -1,14 +1,14 @@
 #include "templatesjson.h"
 #include "configs.h"
 #include "inits.h"
+#include "log.h"
 
 #include <QVariant>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
-#include <QDebug>
 
-TemplatesJson::TemplatesJson()
+TemplatesJson::TemplatesJson() : QObject(nullptr)
 {
     readConfig();
     setTemplates();
@@ -23,7 +23,9 @@ void TemplatesJson::readConfig()
 }
 
 QString TemplatesJson::getNameTemplate(const QJsonObject dataJsObj) {
-    if (!_configRM.value("commands").toObject().keys().contains(dataJsObj.value("method").toString())) {
+    const QString method = dataJsObj.value("method").toString();
+
+    if (!_configRM.value("commands").toObject().keys().contains(method)) {
         return "";
     }
 
@@ -31,13 +33,23 @@ QString TemplatesJson::getNameTemplate(const QJsonObject dataJsObj) {
     fields.sort();
 
     if (!_templates.contains(fields)) {
-        qDebug() << "Is not contains!";
+        warnTemplates << "Is not contains!";
         return "";
     }
 
-
     if (!isCorrectValues(dataJsObj)) {
-        qDebug() << "Is incorrect value!";
+        warnTemplates << "Is incorrect value!";
+        return "";
+    }
+
+    const QString templateJson = _templates[fields];
+
+    if (method != "shell") {
+        return templateJson;
+    }
+
+    if (templateJson == "hallSsh") {
+        warnTemplates << "Template are not compatible with shell!";
         return "";
     }
 
@@ -79,10 +91,8 @@ bool TemplatesJson::isCorrectValues(const QJsonObject dataJsObj) {
                     continue;
                 }
 
-                qDebug() << value.toString();
-
                 if (!isValidIp(value.toString())) {
-                    qWarning().noquote() << field << "data is invalid:" << value.toString();
+                    errorTemplates << field << "data is invalid:" << value.toString();
 
                     return false;
                 }

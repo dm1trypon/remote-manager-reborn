@@ -18,8 +18,10 @@ private:
     void executerTask(const QJsonArray hosts, const QString &dataIn);
     void sshTask(const QJsonArray hosts, const QJsonArray bashes);
 public:
-    Manager();
+    Manager(QObject *parent);
     void taskSwitch(const QString &type, const QJsonObject dataJsonObj);
+private slots:
+    void onSshFinished(const QString &result);
 };
 
 #endif // MANAGER_H

@@ -1,9 +1,14 @@
 {
-    "main": ["service", "mariadb", "commands"],
+    "main": ["service", "mariadb", "commands", "support_kinds"],
     "mariadb": ["db_host", "db_user", "db_pass", "db_port"],
     "service": ["port", "ex_port"],
     "commands": ["xorg", "reboot", "kind", "get_update", "shell"],
     "types": {
+        "main": "QVariantMap",
+        "mariadb": "QVariantMap",
+        "service": "QVariantMap",
+        "commands": "QVariantMap",
+        "support_kinds": "QVariantList",
         "port": "double",
         "ex_port": "double",
         "db_options": "QString",

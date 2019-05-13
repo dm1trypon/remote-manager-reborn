@@ -1,12 +1,13 @@
 #include "parser.h"
 #include "configs.h"
 #include "inits.h"
+#include "log.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QPair>
 
-Parser::Parser()
+Parser::Parser(QObject *parent) : QObject(parent)
 {
 
 }
