@@ -15,12 +15,12 @@ public:
     ServerRM(const quint16 nPort, QObject *parent = nullptr);
     ~ServerRM();
 
-    void sendToClient(const QString &data, QWebSocket *pClient); // send data to clients
     bool isStarted();
 private slots:
-    void slotReadyRead(const QString &data);
-    void slotNewConnection();
-    void slotDisconnected();
+    void onReadyRead(const QString &data);
+    void onNewConnection();
+    void onDisconnect();
+    void onSend(const QString &data, QWebSocket *pClient); // send data to clients
 
 signals:
     void closed();

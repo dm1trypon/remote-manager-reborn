@@ -18,7 +18,7 @@ ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
     _manager(Inits::Instance().getManager())
 {
     infoServerRM << "Starting Remote Manager server...";
-    connect(_pWebSocketServer, &QWebSocketServer::newConnection, this, &ServerRM::slotNewConnection);
+    connect(_pWebSocketServer, &QWebSocketServer::newConnection, this, &ServerRM::onNewConnection);
     connect(_pWebSocketServer, &QWebSocketServer::closed, this, &ServerRM::closed);
 
     if (!_pWebSocketServer->listen(QHostAddress::Any, nPort)) {
@@ -43,7 +43,7 @@ bool ServerRM::isStarted()
     return _isStarted;
 }
 
-void ServerRM::slotReadyRead(const QString &data)
+void ServerRM::onReadyRead(const QString &data)
 {
     infoServerRM << "Data from client:" << data;
 
@@ -67,7 +67,7 @@ void ServerRM::errorMessage()
     return;
 }
 
-void ServerRM::slotNewConnection()
+void ServerRM::onNewConnection()
 {
     QWebSocket *clientSocket = _pWebSocketServer->nextPendingConnection();
 
@@ -76,16 +76,16 @@ void ServerRM::slotNewConnection()
     infoServerRM << "Client" << clientSocket->requestUrl().host() << "has been connected!";
     infoServerRM << "Connected clients:" << _clientList;
 
-    connect(clientSocket, &QWebSocket::textMessageReceived, this, &ServerRM::slotReadyRead);
-    connect(clientSocket, &QWebSocket::disconnected, this, &ServerRM::slotDisconnected);
+    connect(clientSocket, &QWebSocket::textMessageReceived, this, &ServerRM::onReadyRead);
+    connect(clientSocket, &QWebSocket::disconnected, this, &ServerRM::onDisconnect);
 }
 
-void ServerRM::sendToClient(const QString &data, QWebSocket *pClient)
+void ServerRM::onSend(const QString &data, QWebSocket *pClient)
 {
     pClient->sendTextMessage(data);
 }
 
-void ServerRM::slotDisconnected()
+void ServerRM::onDisconnect()
 {
     QWebSocket* clientSocket = qobject_cast<QWebSocket*>(QObject::sender());
 
