@@ -20,7 +20,7 @@ private slots:
     void onReadyRead(const QString &data);
     void onNewConnection();
     void onDisconnect();
-    void onSend(const QString &data, QWebSocket *pClient); // send data to clients
+    void onSend(const QString &data, const QString &hostSender); // send data to clients
 
 signals:
     void closed();

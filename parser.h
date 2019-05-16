@@ -23,6 +23,7 @@ public:
     QString compare(const QJsonObject dataJsObj, const QJsonArray bashes);
     QPair<QJsonObject, QString> fromJson(const QString &data);
     bool isReadyTemplatesJson();
+    QString bashReplacer(QString data, const QString &type, const QString &ip);
 };
 
 #endif // PARSER_H

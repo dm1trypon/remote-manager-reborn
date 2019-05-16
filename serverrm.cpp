@@ -20,6 +20,7 @@ ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
     infoServerRM << "Starting Remote Manager server...";
     connect(_pWebSocketServer, &QWebSocketServer::newConnection, this, &ServerRM::onNewConnection);
     connect(_pWebSocketServer, &QWebSocketServer::closed, this, &ServerRM::closed);
+    connect(_manager, &Manager::sendBack, this, &ServerRM::onSend);
 
     if (!_pWebSocketServer->listen(QHostAddress::Any, nPort)) {
         _isStarted = false;
@@ -55,7 +56,11 @@ void ServerRM::onReadyRead(const QString &data)
         return;
     }
 
-    _manager->taskSwitch(dataPair.second, dataPair.first);
+    QWebSocket* clientSocket = qobject_cast<QWebSocket*>(QObject::sender());
+
+    const QString &hostSender = clientSocket->requestUrl().host();
+
+    _manager->taskSwitch(dataPair.second, dataPair.first, hostSender);
 }
 
 void ServerRM::errorMessage()
@@ -80,9 +85,15 @@ void ServerRM::onNewConnection()
     connect(clientSocket, &QWebSocket::disconnected, this, &ServerRM::onDisconnect);
 }
 
-void ServerRM::onSend(const QString &data, QWebSocket *pClient)
+void ServerRM::onSend(const QString &data, const QString &hostSender)
 {
-    pClient->sendTextMessage(data);
+    foreach(QWebSocket *client, _clientList) {
+        if (client->requestUrl().host() != hostSender) {
+            continue;
+        }
+
+        client->sendTextMessage(data);
+    }
 }
 
 void ServerRM::onDisconnect()

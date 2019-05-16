@@ -39,8 +39,15 @@ QString Parser::compare(const QJsonObject dataJsObj, const QJsonArray bashes)
 
     QString data(jsDoc.toJson(QJsonDocument::Compact));
 
+    return bashReplacer(data, dataJsObj.value("type").toString(), ip);
+}
+
+QString Parser::bashReplacer(QString data, const QString &type, const QString &ip)
+{
+    qDebug() << data << type << ip;
+
     if (data.contains("%kind%")) {
-        data.replace("%kind%", dataJsObj.value("type").toString());
+        data.replace("%kind%", type);
     }
 
     if (data.contains("%host%")) {
