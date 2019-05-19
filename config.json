@@ -1,5 +1,5 @@
 {
-    "main": ["service", "mariadb", "commands", "support_kinds"],
+    "main": ["service", "mariadb", "commands", "support_kinds", "dependence"],
     "mariadb": ["db_host", "db_user", "db_pass", "db_port"],
     "service": ["port", "ex_port"],
     "commands": ["xorg", "reboot", "kind", "get_update", "shell"],
@@ -9,6 +9,7 @@
         "service": "QVariantMap",
         "commands": "QVariantMap",
         "support_kinds": "QVariantList",
+        "dependence": "QVariantList",
         "port": "double",
         "ex_port": "double",
         "db_options": "QString",

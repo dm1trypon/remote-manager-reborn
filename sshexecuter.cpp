@@ -11,26 +11,30 @@ SshExecuter::SshExecuter(QObject *parent) : QObject (parent)
 
 }
 
-void SshExecuter::toSsh(const QString &host, const QJsonArray bashes, const QString &hostSender)
+void SshExecuter::toSsh(const QString &hostEx, const QString &method, const QJsonArray bashes,
+                        const QString &hostSender)
 {
     if (!_procData.isEmpty()) {
         _procData.clear();
     }
 
     foreach(const QJsonValue bash, bashes) {
-        const QString &sshBash = SSH + host + FLAGS + " '" + bash.toString() + "'\"";
+        const QString &sshBash = SSH + hostEx + FLAGS + " '" + bash.toString() + "'\"";
 
         infoSshEx << "SSH bash:" << sshBash;
 
-        exec(sshBash, hostSender);
+        exec(sshBash, hostSender, method, hostEx);
     }
 }
 
-void SshExecuter::exec(const QString &sshBash, const QString &hostSender)
+void SshExecuter::exec(const QString &sshBash, const QString &hostSender, const QString &method, const QString &hostEx)
 {
     QPointer<QProcess> proc = new QProcess();
 
-    _procMapData.insert(proc, QPair<QString, QString>(hostSender, ""));
+    _procResultData.insert(proc, QPair<QPair<QString, QString>, QPair<QString, QString>>
+                           (QPair<QString, QString>(hostSender, ""),
+                            QPair<QString, QString>(hostEx, method)));
+
 
     connect(proc, &QProcess::readyReadStandardOutput, this, &SshExecuter::onResultProcess);
     connect(proc, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this,
@@ -47,21 +51,26 @@ void SshExecuter::onFinishedProcess(const int, QProcess::ExitStatus)
         return;
     }
 
-    if (!_procMapData.contains(proc)) {
+    if (!_procResultData.contains(proc)) {
         return;
     }
 
-    QString procData = _procMapData[proc].second;
-
-    const QString hostSender = _procMapData[proc].first;
-
-    _procMapData.remove(proc);
+    QString procData = _procResultData[proc].first.second;
 
     if (procData.isEmpty()) {
         procData = "Done";
     }
 
-    emit finished(procData, hostSender);
+    QStringList finishedData = {
+        procData,
+        _procResultData[proc].first.first,
+        _procResultData[proc].second.first,
+        _procResultData[proc].second.second
+    };
+
+    _procResultData.remove(proc);
+
+    emit finished(finishedData);
 }
 
 QMap<QString, bool> SshExecuter::isOnline(const QJsonArray hosts, const QString &hostSender)
@@ -74,18 +83,20 @@ QMap<QString, bool> SshExecuter::isOnline(const QJsonArray hosts, const QString 
 
     QPointer<QProcess> proc = new QProcess;
 
-    _procMapData.insert(proc, QPair<QString, QString>(hostSender, ""));
+    _procResultData.insert(proc, QPair<QPair<QString, QString>, QPair<QString, QString>>
+                           (QPair<QString, QString>(hostSender, ""),
+                            QPair<QString, QString>("", "")));
 
     connect(proc, &QProcess::readyReadStandardOutput, this, &SshExecuter::onResultProcess);
 
     proc->start(bash);
     proc->waitForFinished();
 
-    if (!_procMapData.contains(proc)) {
+    if (!_procResultData.contains(proc)) {
         return {};
     }
 
-    QStringList resultProc = _procMapData[proc].second.split("\n");
+    QStringList resultProc = _procResultData[proc].first.second.split("\n");
     resultProc.removeOne("");
 
     QMap<QString, bool> hostsStatus;
@@ -113,5 +124,5 @@ void SshExecuter::onResultProcess()
 
     const QString data = proc->readAllStandardOutput();
 
-    _procMapData[proc].second = _procMapData[proc].second + data;
+    _procResultData[proc].first.second = _procResultData[proc].first.second + data;
 }

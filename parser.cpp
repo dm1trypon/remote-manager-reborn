@@ -124,3 +124,16 @@ bool Parser::isValidJson(const QJsonDocument jsonDoc) {
 
     return true;
 }
+
+QString Parser::toResultJson(const QString &result, const QString &method, const QString &ip)
+{
+    QJsonObject jsObj {
+        {"method", method},
+        {"result", result},
+        {"host", ip},
+    };
+
+    const QJsonDocument jsDoc(jsObj);
+
+    return jsDoc.toJson(QJsonDocument::Compact);
+}

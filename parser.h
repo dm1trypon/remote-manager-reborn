@@ -24,6 +24,7 @@ public:
     QPair<QJsonObject, QString> fromJson(const QString &data);
     bool isReadyTemplatesJson();
     QString bashReplacer(QString data, const QString &type, const QString &ip);
+    QString toResultJson(const QString &result, const QString &method, const QString &ip);
 };
 
 #endif // PARSER_H

@@ -12,22 +12,23 @@ class SshExecuter : public QObject
     Q_OBJECT
 public:
     SshExecuter(QObject *parent);
-    void toSsh(const QString &host, const QJsonArray bashes, const QString &hostSender);
+    void toSsh(const QString &hostEx, const QString &method, const QJsonArray bashes, const QString &hostSender);
 
     QMap<QString, bool> isOnline(const QJsonArray hosts, const QString &hostSender);
 private slots:
     void onResultProcess();
     void onFinishedProcess(const int, QProcess::ExitStatus);
 signals:
-    void finished(QString, QString);
+    void finished(QStringList);
 private:
     const QString SSH = "/bin/bash -c \"ssh ";
     const QString FLAGS = " -o StrictHostKeyChecking=no"
                      " -o UserKnownHostsFile=/dev/null";
 
-    QMap <QProcess*, QPair<QString, QString>> _procMapData;
+    QMap <QProcess*, QPair<QPair<QString, QString>, QPair<QString, QString>>> _procResultData;
+
     QString _procData;
-    void exec(const QString &sshBash, const QString &hostSender);
+    void exec(const QString &sshBash, const QString &hostSender, const QString &method, const QString &hostEx);
 };
 
 #endif // SSHEXECUTER_H

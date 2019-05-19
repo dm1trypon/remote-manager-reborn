@@ -7,6 +7,7 @@
 #include "database.h"
 #include "manager.h"
 #include "sshexecuter.h"
+#include "dependence.h"
 
 #include <QPointer>
 
@@ -28,6 +29,7 @@ private:
     Inits& operator = (const Inits&) = delete;
 
     QPointer<ServerRM> _serverRM = nullptr;
+    QPointer<Dependence> _dependence = nullptr;
     QPointer<Parser> _parser = nullptr;
     QPointer<DataBase> _database = nullptr;
     QPointer<Configs> _configs = nullptr;
@@ -41,6 +43,7 @@ private:
     bool isInitServer();
     bool isInitSshExecuter();
     bool isInitLog();
+    bool isInitDependence();
 };
 
 #endif // INITS_H

@@ -52,7 +52,7 @@ void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj, con
 
     if (dataJsonObj.contains("ssh")) {
         if (dataJsonObj.value("ssh").toBool()) {
-            sshTask(hosts, bashes, hostSender, dataJsonObj.value("type").toString());
+            sshTask(hosts, bashes, hostSender, dataJsonObj.value("type").toString(), method);
 
             return;
         }
@@ -63,7 +63,7 @@ void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj, con
     }
 
     if (dataJsonObj.contains("host_ssh")) {
-        sshTask(dataJsonObj.value("host_ssh").toArray(), bashes, hostSender, dataJsonObj.value("type").toString());
+        sshTask(dataJsonObj.value("host_ssh").toArray(), bashes, hostSender, dataJsonObj.value("type").toString(), method);
 
         return;
     }
@@ -73,12 +73,12 @@ void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj, con
     executerTask(hosts, dataIn, hostSender);
 }
 
-QJsonArray Manager::compareBashes(QJsonArray bashes, const QString &type, const QString &hostEx)
+QJsonArray Manager::compareBashes(QJsonArray bashes, const QString &kind, const QString &ip)
 {
     const QJsonDocument jsDoc(bashes);
 
-    return QJsonDocument::fromJson(_parser->bashReplacer(jsDoc.toJson(QJsonDocument::Compact), type,
-                                                         hostEx).toUtf8()).array();
+    return QJsonDocument::fromJson(_parser->bashReplacer(jsDoc.toJson(QJsonDocument::Compact), kind,
+                                                         ip).toUtf8()).array();
 }
 
 QJsonArray Manager::getHostsList(const QString &hallId) {
@@ -87,11 +87,12 @@ QJsonArray Manager::getHostsList(const QString &hallId) {
     return dataBase->getHostsList(hallId);
 }
 
-void Manager::onSshFinished(const QString &result, const QString &hostSender)
+void Manager::onSshFinished(const QStringList finishedData)
 {
-    infoManager << "Finished ssh bash:" << result << "Request host:" << hostSender;
+    infoManager << "Finished ssh bash:" << finishedData[0] << "Request host:" << finishedData[1]
+                << "Host executer:" << finishedData[2] << "Method:" << finishedData[3];
 
-    emit sendBack(result, hostSender);
+    emit sendBack(_parser->toResultJson(finishedData[0], finishedData[3], finishedData[2]), finishedData[1]);
 }
 
 void Manager::executerTask(const QJsonArray hosts, const QString &dataIn, const QString &hostSender)
@@ -110,9 +111,16 @@ void Manager::executerTask(const QJsonArray hosts, const QString &dataIn, const 
     }
 }
 
-void Manager::sshTask(const QJsonArray hosts, const QJsonArray bashes, const QString &hostSender, const QString &kind)
+void Manager::sshTask(const QJsonArray hosts, const QJsonArray bashes, const QString &hostSender, const QString &kind,
+                      const QString &method)
 {
-    const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts, hostSender);
+    QMap<QString, bool> hostsStatus;
+
+    foreach(const QJsonValue host, hosts) {
+        hostsStatus.insert(host.toString(), true);
+    }
+
+//    const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts, hostSender);
 
     foreach(const QString ip, hostsStatus.keys()) {
         if (!hostsStatus[ip]) {
@@ -121,6 +129,6 @@ void Manager::sshTask(const QJsonArray hosts, const QJsonArray bashes, const QSt
             continue;
         }
 
-        _sshExecuter->toSsh(ip, compareBashes(bashes, kind, ip), hostSender);
+        _sshExecuter->toSsh(ip, method, compareBashes(bashes, kind, ip), hostSender);
     }
 }

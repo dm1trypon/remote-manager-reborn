@@ -40,6 +40,10 @@
 #define warnTemplates qWarning().noquote() << Log::getDataTime() << "[Templates][Warning] >>"
 #define errorTemplates qCritical().noquote() << Log::getDataTime() << "[Templates][Error] >>"
 
+#define infoDependence qDebug().noquote() << Log::getDataTime() << "[Dependence][Debug] >>"
+#define warnDependence qWarning().noquote() << Log::getDataTime() << "[Dependence][Warning] >>"
+#define errorDependence qCritical().noquote() << Log::getDataTime() << "[Dependence][Error] >>"
+
 class Log : public QObject
 {
     Q_OBJECT

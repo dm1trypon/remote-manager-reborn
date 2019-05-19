@@ -17,6 +17,13 @@ bool Inits::isInited()
         return false;
     }
 
+    infoInitSrv << "[Init dependence]";
+
+    if (!isInitDependence()) {
+        errorInitSrv << "Init dependence failed";
+        return false;
+    }
+
     infoInitSrv << "Success!";
     infoInitSrv << "[Init DB]";
 
@@ -58,6 +65,21 @@ bool Inits::isInited()
     }
 
     infoInitSrv << "Success!";
+
+    return true;
+}
+
+bool Inits::isInitDependence()
+{
+    _dependence = new Dependence(_configs->getConfigs()["remote-manager"].value("dependence").toArray(), nullptr);
+
+    if (!_dependence) {
+        return false;
+    }
+
+    if (!_dependence->isExists()) {
+        return false;
+    }
 
     return true;
 }
