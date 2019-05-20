@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QUrl>
 #include <QJsonArray>
+#include <QtConcurrent/QtConcurrent>
 
 Manager::Manager(QObject *parent) : QObject (parent)
 {
@@ -25,8 +26,6 @@ Manager::Manager(QObject *parent) : QObject (parent)
 
 void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj, const QString &hostSender)
 {
-
-
     const QString &method = dataJsonObj.value("method").toString();
 
     QJsonArray hosts;
@@ -62,15 +61,17 @@ void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj, con
         hosts = dataJsonObj.value("host_ex").toArray();
     }
 
+    const QString typeKind = dataJsonObj.value("type").toString();
+
     if (dataJsonObj.contains("host_ssh")) {
-        sshTask(dataJsonObj.value("host_ssh").toArray(), bashes, hostSender, dataJsonObj.value("type").toString(), method);
+        sshTask(dataJsonObj.value("host_ssh").toArray(), bashes, hostSender, typeKind, method);
 
         return;
     }
 
-    const QString &dataIn = _parser->compare(dataJsonObj, bashes);
+    const QMap<QString, QString> dataIn = _parser->compare(dataJsonObj, bashes);
 
-    executerTask(hosts, dataIn, hostSender);
+    executerTask(hosts, dataIn, hostSender, method);
 }
 
 QJsonArray Manager::compareBashes(QJsonArray bashes, const QString &kind, const QString &ip)
@@ -87,48 +88,56 @@ QJsonArray Manager::getHostsList(const QString &hallId) {
     return dataBase->getHostsList(hallId);
 }
 
-void Manager::onSshFinished(const QStringList finishedData)
+void Manager::onSshFinished(QMap<QString, QString> finishedData)
 {
-    infoManager << "Finished ssh bash:" << finishedData[0] << "Request host:" << finishedData[1]
-                << "Host executer:" << finishedData[2] << "Method:" << finishedData[3];
-
-    emit sendBack(_parser->toResultJson(finishedData[0], finishedData[3], finishedData[2]), finishedData[1]);
+    emit sendBack(_parser->toResultJson(finishedData["procData"], finishedData["method"], finishedData["hostEx"], true),
+            finishedData["hostSender"]);
 }
 
-void Manager::executerTask(const QJsonArray hosts, const QString &dataIn, const QString &hostSender)
+void Manager::executerTask(const QJsonArray hosts, const QMap<QString, QString> dataIn, const QString &hostSender,
+                           const QString &method)
 {
     const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts, hostSender);
 
     foreach(const QString ip, hostsStatus.keys()) {
         if (!hostsStatus[ip]) {
-            infoManager << "Host" << ip << "is offline." << "Request host:" << hostSender;
+            const QString error = "Host " + ip + " is offline";
+
+            infoManager << error;
+
+            emit sendBack(_parser->toResultJson(error, method, ip, false), hostSender);
 
             continue;
         }
 
         ClientExecuter clientExecuter(QUrl("wss://" + ip + ":"
-                                           + QString::number(_port)),  dataIn, this);
+                                           + QString::number(_port)), dataIn[ip], this);
     }
 }
 
 void Manager::sshTask(const QJsonArray hosts, const QJsonArray bashes, const QString &hostSender, const QString &kind,
                       const QString &method)
 {
-    QMap<QString, bool> hostsStatus;
+//    QMap<QString, bool> hostsStatus;
 
-    foreach(const QJsonValue host, hosts) {
-        hostsStatus.insert(host.toString(), true);
-    }
+//    foreach(const QJsonValue host, hosts) {
+//        hostsStatus.insert(host.toString(), true);
+//    }
 
-//    const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts, hostSender);
+    const QMap<QString, bool> hostsStatus = _sshExecuter->isOnline(hosts, hostSender);
 
     foreach(const QString ip, hostsStatus.keys()) {
         if (!hostsStatus[ip]) {
-            infoManager << "Host" << ip << "is offline." << "Request host:" << hostSender;
+            const QString error = "Host " + ip + " is offline";
+
+            infoManager << error;
+
+            emit sendBack(_parser->toResultJson(error, method, ip, false), hostSender);
 
             continue;
         }
 
-        _sshExecuter->toSsh(ip, method, compareBashes(bashes, kind, ip), hostSender);
+        QtConcurrent::run(_sshExecuter, &SshExecuter::toSsh, ip, method,
+                                                 compareBashes(bashes, kind, ip), hostSender);
     }
 }

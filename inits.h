@@ -24,6 +24,7 @@ public:
     Configs *getConfigs();
     Manager *getManager();
     SshExecuter *getSshExecuter();
+    ServerRM *getServerRM();
 private:
     Inits(const Inits& root) = delete;
     Inits& operator = (const Inits&) = delete;

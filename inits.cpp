@@ -17,6 +17,7 @@ bool Inits::isInited()
         return false;
     }
 
+    infoInitSrv << "Success!";
     infoInitSrv << "[Init dependence]";
 
     if (!isInitDependence()) {
@@ -182,6 +183,11 @@ bool Inits::isInitSshExecuter()
     }
 
     return true;
+}
+
+ServerRM* Inits::getServerRM()
+{
+    return _serverRM;
 }
 
 DataBase* Inits::getDataBase()

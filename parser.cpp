@@ -26,9 +26,9 @@ QJsonArray Parser::getBash(const QString &method)
     return valueMethod.toArray();
 }
 
-QString Parser::compare(const QJsonObject dataJsObj, const QJsonArray bashes)
+QMap<QString, QString> Parser::compare(const QJsonObject dataJsObj, const QJsonArray bashes)
 {
-    const QString ip = dataJsObj.value("host_ex").toString();
+    const QJsonArray hostsJsArr = dataJsObj.value("host_ex").toArray();
 
     QJsonObject jsObj;
     jsObj.insert("method", dataJsObj.value("method").toString());
@@ -39,13 +39,17 @@ QString Parser::compare(const QJsonObject dataJsObj, const QJsonArray bashes)
 
     QString data(jsDoc.toJson(QJsonDocument::Compact));
 
-    return bashReplacer(data, dataJsObj.value("type").toString(), ip);
+    QMap<QString, QString> dataIn;
+
+    foreach(const QJsonValue &ip, hostsJsArr) {
+        dataIn.insert(ip.toString(), bashReplacer(data, dataJsObj.value("type").toString(), ip.toString()));
+    }
+
+    return dataIn;
 }
 
 QString Parser::bashReplacer(QString data, const QString &type, const QString &ip)
 {
-    qDebug() << data << type << ip;
-
     if (data.contains("%kind%")) {
         data.replace("%kind%", type);
     }
@@ -125,11 +129,29 @@ bool Parser::isValidJson(const QJsonDocument jsonDoc) {
     return true;
 }
 
-QString Parser::toResultJson(const QString &result, const QString &method, const QString &ip)
+QString Parser::toErrorJson(const QString &error)
 {
     QJsonObject jsObj {
+        {"method", "error"},
+        {"error", error},
+    };
+
+    const QJsonDocument jsDoc(jsObj);
+
+    return jsDoc.toJson(QJsonDocument::Compact);
+}
+
+QString Parser::toResultJson(const QString &result, const QString &method, const QString &ip, bool isError)
+{
+    QString field = "result";
+
+    if (!isError) {
+        field = "error";
+    }
+
+    QJsonObject jsObj {
         {"method", method},
-        {"result", result},
+        {field, result},
         {"host", ip},
     };
 

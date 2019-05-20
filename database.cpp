@@ -80,6 +80,6 @@ QJsonArray DataBase::getHostsList(const QString &hallId)
 }
 
 bool DataBase::isConnected() {
-//    return _db.isOpen();
-    return true;
+    return _db.isOpen();
+//    return true;
 }

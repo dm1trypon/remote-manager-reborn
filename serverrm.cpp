@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QPair>
+#include <QtConcurrent/QtConcurrent>
 
 ServerRM::ServerRM(const quint16 nPort, QObject *parent) :
     QObject(parent),
@@ -51,7 +52,10 @@ void ServerRM::onReadyRead(const QString &data)
     const QPair<QJsonObject, QString> dataPair = _parser->fromJson(data);
 
     if (dataPair.first.isEmpty() || dataPair.second.isEmpty()) {
-        errorServerRM << "Incorrect input data:" << data;
+        const QString &error = "Incorrect input data: " + data;
+        errorServerRM << error;
+
+        onSend(_parser->toErrorJson(error), qobject_cast<QWebSocket*>(QObject::sender())->requestUrl().host());
 
         return;
     }
@@ -60,7 +64,7 @@ void ServerRM::onReadyRead(const QString &data)
 
     const QString &hostSender = clientSocket->requestUrl().host();
 
-    _manager->taskSwitch(dataPair.second, dataPair.first, hostSender);
+    QtConcurrent::run(_manager, &Manager::taskSwitch, dataPair.second, dataPair.first, hostSender);
 }
 
 void ServerRM::errorMessage()

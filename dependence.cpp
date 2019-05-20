@@ -27,20 +27,19 @@ bool Dependence::isExists()
         proc->start("which " + dependence.toString());
         proc->waitForFinished();
 
-        if (_procData.isEmpty()) {
-            warnDependence << "which is not found";
-
-            return false;
-        }
-
-        if (_procData.contains("which: no")) {
-            warnDependence << dependence << "is not found";
+        if (isIncorrect()) {
+            warnDependence << dependence.toString() << "is not found";
 
             return false;
         }
     }
 
     return true;
+}
+
+bool Dependence::isIncorrect()
+{
+    return _procData.isEmpty() || _procData.contains("which: no");
 }
 
 void Dependence::onResultProcess()

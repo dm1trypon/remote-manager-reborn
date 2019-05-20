@@ -20,11 +20,12 @@ public:
     bool isValidResult(const QString &dataOut, const QString &dataIn);
     bool isFinished(const QString &dataOut);
     QJsonArray getBash(const QString &method);
-    QString compare(const QJsonObject dataJsObj, const QJsonArray bashes);
+    QMap<QString, QString> compare(const QJsonObject dataJsObj, const QJsonArray bashes);
     QPair<QJsonObject, QString> fromJson(const QString &data);
     bool isReadyTemplatesJson();
     QString bashReplacer(QString data, const QString &type, const QString &ip);
-    QString toResultJson(const QString &result, const QString &method, const QString &ip);
+    QString toResultJson(const QString &result, const QString &method, const QString &ip, bool isError);
+    QString toErrorJson(const QString &error);
 };
 
 #endif // PARSER_H

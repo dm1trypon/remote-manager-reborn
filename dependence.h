@@ -15,6 +15,7 @@ private:
     QString _procData;
     QJsonArray _depJsArr;
 
+    bool isIncorrect();
 private slots:
     void onResultProcess();
 };

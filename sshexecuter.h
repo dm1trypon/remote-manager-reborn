@@ -17,9 +17,8 @@ public:
     QMap<QString, bool> isOnline(const QJsonArray hosts, const QString &hostSender);
 private slots:
     void onResultProcess();
-    void onFinishedProcess(const int, QProcess::ExitStatus);
 signals:
-    void finished(QStringList);
+    void finished(QMap<QString, QString>);
 private:
     const QString SSH = "/bin/bash -c \"ssh ";
     const QString FLAGS = " -o StrictHostKeyChecking=no"
@@ -28,7 +27,7 @@ private:
     QMap <QProcess*, QPair<QPair<QString, QString>, QPair<QString, QString>>> _procResultData;
 
     QString _procData;
-    void exec(const QString &sshBash, const QString &hostSender, const QString &method, const QString &hostEx);
+    void exec(const QString &sshBash, const QString &hostSender, const QString &method, const QString &hostEx, QProcess *proc);
 };
 
 #endif // SSHEXECUTER_H
