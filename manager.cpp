@@ -9,19 +9,13 @@
 #include <QJsonArray>
 #include <QtConcurrent/QtConcurrent>
 
-Manager::Manager(QObject *parent) : QObject (parent)
+Manager::Manager(const int port, Parser *parser, SshExecuter *sshExecuter, QObject *parent) :
+    QObject (parent),
+    _parser(parser),
+    _sshExecuter(sshExecuter),
+    _port(port)
 {
-    Configs *configs = Inits::Instance().getConfigs();
-
-    _parser = Inits::Instance().getParser();
-
-    _sshExecuter = Inits::Instance().getSshExecuter();
-
     connect(_sshExecuter, &SshExecuter::finished, this, &Manager::onSshFinished);
-
-    const QJsonObject service = configs->getConfigs()["remote-manager"].value("service").toObject();
-
-    _port = static_cast<int>(service.value("ex_port").toDouble());
 }
 
 void Manager::taskSwitch(const QString &type, const QJsonObject dataJsonObj, const QString &hostSender)

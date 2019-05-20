@@ -147,7 +147,11 @@ bool Inits::isInitParser()
 
 bool Inits::isInitManager()
 {
-    _manager = new Manager(nullptr);
+    const QJsonObject serviceCfg = _configs->getConfigs()["remote-manager"].value("service").toObject();
+
+    _port = static_cast<int>(serviceCfg.value("ex_port").toDouble());
+
+    _manager = new Manager(_port, _parser, _sshExecuter, nullptr);
 
     if (!_manager) {
         return false;
@@ -158,10 +162,7 @@ bool Inits::isInitManager()
 
 bool Inits::isInitServer()
 {
-    const QJsonObject configService = _configs->getConfigs()["remote-manager"].value("service").toObject();
-    const quint16 port = static_cast<quint16>(configService.value("port").toDouble());
-
-    _serverRM = new ServerRM(port, _parser);
+    _serverRM = new ServerRM(static_cast<quint16>(_port), _parser);
 
     if (!_serverRM) {
         return false;

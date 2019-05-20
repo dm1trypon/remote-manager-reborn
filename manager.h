@@ -13,20 +13,27 @@ class Manager : public QObject
 private:
     Parser *_parser = nullptr;
     SshExecuter *_sshExecuter = nullptr;
-    bool isExecuter(const QString &type);
-    QJsonArray getHostsList(const QString &hallId);
-    int _port;
-    void executerTask(const QJsonArray hosts, const QMap<QString, QString> dataIn, const QString &hostSender, const QString &method);
 
+    QJsonArray getHostsList(const QString &hallId);
+
+    bool isExecuter(const QString &type);
+
+    int _port;
+
+    void executerTask(const QJsonArray hosts, const QMap<QString, QString> dataIn, const QString &hostSender, const QString &method);
     void sshTask(const QJsonArray hosts, const QJsonArray bashes, const QString &hostSender, const QString &kind,
                  const QString &method);
 
     QJsonArray compareBashes(QJsonArray bashes, const QString &kind, const QString &ip);
+
 public:
-    Manager(QObject *parent);
+    Manager(const int port, Parser *parser, SshExecuter *sshExecuter, QObject *parent);
+
     void taskSwitch(const QString &type, const QJsonObject dataJsonObj, const QString &hostSender);
+
 private slots:
     void onSshFinished(QMap<QString, QString> finishedData);
+
 signals:
     void sendBack(QString, QString);
 };
